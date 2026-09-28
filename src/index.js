@@ -131,12 +131,19 @@ function runSolhint(target, cwd = process.cwd()) {
 // ── Temp file helper ──────────────────────────────────────────────────────────
 // Solhint's ignore module requires the .sol file to be relative to the config,
 // so we create a temp directory with a default config alongside the file.
-function withTempSol(code, fn) {
+function withTempSol(code, fn, configOverride = null) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'solhint_mcp_'))
   const tmp = path.join(dir, 'contract.sol')
   const cfg = path.join(dir, '.solhint.json')
   try {
     fs.writeFileSync(tmp, code, 'utf8')
+
+    // An explicit config from the caller wins. solhint runs with `dir` as its cwd,
+    // so this is the only place it will look.
+    if (configOverride) {
+      fs.writeFileSync(cfg, JSON.stringify(configOverride), 'utf8')
+      return fn(tmp, dir)
+    }
     // solhint runs with `dir` as its cwd, so it only ever sees what we put there.
     // Copy the project's own config when there is one; otherwise fall back to
     // recommended. Never leave the temp dir without a config — solhint exits 255
@@ -330,7 +337,7 @@ const TOOLS = [
           description: 'Solhint rule ID (e.g. gas-custom-errors, compiler-version)',
         },
       },
-      required: ['rule_id'],
+      required: ['ruleId'],
     },
   },
   {
@@ -340,7 +347,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        project_dir: {
+        projectDir: {
           type: 'string',
           description: 'Directory to search for .solhint.json',
         },
@@ -369,25 +376,16 @@ function handleTool(name, args) {
       const { code, config } = args
       if (!code) return { error: 'code is required' }
 
-      let configFile = null
-      if (config) {
-        configFile = path.join(os.tmpdir(), `.solhint_mcp_${Date.now()}.json`)
-        fs.writeFileSync(configFile, JSON.stringify(config), 'utf8')
-      }
-
-      return withTempSol(code, (tmp, dir) => {
-        const { violations, error } = runSolhint(tmp, dir)
-        if (configFile) {
-          try {
-            fs.unlinkSync(configFile)
-          } catch {
-            // cleanup failure is non-fatal
-          }
-        }
-        if (error && violations.length === 0) return { content: `⚠️ ${error}` }
-        recordLint({ tool: 'lint_solidity', target: 'inline', violationCount: violations.length })
-        return { content: formatViolations(violations) }
-      })
+      return withTempSol(
+        code,
+        (tmp, dir) => {
+          const { violations, error } = runSolhint(tmp, dir)
+          if (error && violations.length === 0) return { content: `⚠️ ${error}` }
+          recordLint({ tool: 'lint_solidity', target: 'inline', violationCount: violations.length })
+          return { content: formatViolations(violations) }
+        },
+        config || null
+      )
     }
 
     case 'lint_file': {
@@ -418,7 +416,9 @@ function handleTool(name, args) {
         glob = '**/*.sol'
       }
 
-      const { violations, error } = runSolhint(`'${glob}'`, dir)
+      // No shell is involved (spawnSync takes an argv array), so quoting the glob
+      // here would make the quote characters part of the pattern and match nothing.
+      const { violations, error } = runSolhint(glob, dir)
       if (error && violations.length === 0) return { content: `⚠️ ${error}` }
       recordLint({ tool: 'lint_project', target: dir, violationCount: violations.length })
       return { content: formatViolations(violations) }
