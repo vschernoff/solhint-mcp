@@ -1,0 +1,49 @@
+{
+  "name": "solhint-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Solhint \u2014 lint Solidity smart contracts directly from Claude Code and other MCP clients",
+  "main": "src/index.js",
+  "bin": {
+    "solhint-mcp": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node src/index.js --test",
+    "lint": "eslint src/ && prettier --check .",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "solidity",
+    "solhint",
+    "linter",
+    "smart-contracts",
+    "mcp",
+    "claude",
+    "model-context-protocol"
+  ],
+  "author": "Vitaliy Chernov",
+  "license": "MIT",
+  "peerDependencies": {
+    "solhint": ">=5.0.0"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vschernoff/solhint-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vschernoff/solhint-mcp/issues"
+  },
+  "homepage": "https://github.com/vschernoff/solhint-mcp#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3"
+  }
+}
