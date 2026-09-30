@@ -1,0 +1,51 @@
+# Solhint is a dependency of this package, not part of it, so a Solhint release can
+# break this server without anything here changing. This job runs on a schedule as
+# well as on push so that breakage surfaces here rather than in someone's editor.
+name: Solhint compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Mondays, 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  pinned:
+    name: solhint@${{ matrix.solhint }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Floor and current of the range in package.json#solhintCompatibility.
+        # 6.0.x is excluded: it can terminate the host process while loading a
+        # missing plugin.
+        solhint: ['6.1.0', '6.2.4']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false solhint@${{ matrix.solhint }}
+      - run: npm test
+
+  latest:
+    name: solhint@latest (early warning)
+    runs-on: ubuntu-latest
+    # A new Solhint release outside the supported range is information, not a failure
+    # of this repository — it tells us the range needs widening or the runner fixing.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false solhint@latest
+      - run: node -e "console.log('testing against solhint', require('solhint/package.json').version)"
+      - run: npm test

@@ -1,0 +1,28 @@
+solhint-mcp
+===========
+
+This package contains work by more than one author. Both are covered by the
+MIT licence in LICENSE, and both copyright lines must be preserved in any
+redistribution.
+
+Copyright (c) 2017-2026 Protofire
+  src/solhint-runner.js
+  src/tools.js
+  src/index.js
+  test/implementation.test.js
+  test/server.test.js
+  test/packed-smoke.js
+
+  Originally written by Diego Bale (@dbale-arg) for protofire/solhint, as
+  pull request #795, and published there under the MIT licence. Moved into
+  this repository with his agreement so the MCP server can be maintained and
+  released independently of Solhint's own release cycle.
+
+Copyright (c) 2026 Vitaliy Chernov
+  Subsequent modifications in this repository, including the autofix tools
+  (`fix_solidity`, `fix_file`), the parser-error handling, the unscoped
+  package name, and everything under pro/.
+
+Solhint itself — https://github.com/protofire/solhint — is a separate MIT
+project maintained by Protofire, and is a dependency of this package rather
+than part of it.
