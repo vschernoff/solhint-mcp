@@ -1,7 +1,7 @@
 {
   "name": "solhint-mcp",
   "version": "0.1.0",
-  "description": "MCP server for Solhint — lint Solidity smart contracts directly from Claude Code and other MCP clients",
+  "description": "MCP server for Solhint — lint and autofix Solidity smart contracts from any MCP client (Claude Code, Codex, Cursor, and others)",
   "main": "src/index.js",
   "bin": {
     "solhint-mcp": "src/index.js"
@@ -18,9 +18,13 @@
     "solhint",
     "linter",
     "smart-contracts",
+    "security",
     "mcp",
+    "model-context-protocol",
+    "ai-agent",
     "claude",
-    "model-context-protocol"
+    "codex",
+    "cursor"
   ],
   "author": "Vitaliy Chernov",
   "license": "MIT",

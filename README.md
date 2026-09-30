@@ -1,6 +1,8 @@
 # solhint-mcp
 
-An MCP server that exposes Solhint as tools for Claude Code and other MCP clients.
+An MCP server that exposes Solhint as tools for any MCP client — Claude Code, OpenAI
+Codex, Cursor, Windsurf, Claude Desktop, and anything else that speaks the protocol.
+Nothing in it is specific to one vendor.
 
 The server runs Solhint through its JavaScript API. It does not start a shell, invoke
 `npx solhint`, make update checks, or parse CLI output.
@@ -13,9 +15,28 @@ The server runs Solhint through its JavaScript API. It does not start a shell, i
 The process working directory is the project root. Start another server process for a
 different project.
 
-## Claude Code
+## Installation
 
-From the Solidity project directory:
+Most clients are configured with a JSON block. Add this to your client's MCP
+configuration, with the Solidity project as the working directory:
+
+```json
+{
+  "mcpServers": {
+    "solhint": {
+      "command": "npx",
+      "args": ["-y", "solhint-mcp"]
+    }
+  }
+}
+```
+
+On native Windows, clients that launch servers through `npx` generally need
+`"command": "cmd"` with `"args": ["/c", "npx", "-y", "solhint-mcp"]`.
+
+### Client-specific shortcuts
+
+**Claude Code** — from the Solidity project directory:
 
 ```bash
 claude mcp add solhint -- npx -y solhint-mcp
@@ -23,21 +44,22 @@ claude mcp add solhint -- npx -y solhint-mcp
 
 The default local scope associates the server with the current project. Use
 `--scope project` before `--` if the configuration should be committed in `.mcp.json`.
+On native Windows, Claude Code requires `cmd /c`:
 
-On native Windows, Claude Code requires `cmd /c` for local MCP servers launched with
-`npx`:
-
-```powershell
+```bash
 claude mcp add solhint -- cmd /c npx -y solhint-mcp
 ```
 
-## Claude Desktop
+**OpenAI Codex** — add the JSON block above to the MCP server configuration in
+`~/.codex/config.toml` or the equivalent for your Codex client.
 
-Claude Desktop installation is separate from Claude Code. This package is currently a
+**Cursor / Windsurf** — add the JSON block above to the editor's MCP settings.
+
+**Claude Desktop** — installation is separate from Claude Code. This package is a
 stdio npm server, not a packaged Desktop Extension (`.mcpb`). Configure it as a local
 development MCP server only if the client launches it with the Solidity project as its
 working directory. See Anthropic's current
-[Claude Desktop local-server instructions](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop).
+[local-server instructions](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop).
 
 ## Tools
 
@@ -69,7 +91,8 @@ the rule defines them.
 ## If your repository already documents a lint command
 
 An agent follows an explicit instruction in your repository over a tool description.
-If `AGENTS.md`, `CLAUDE.md` or a similar playbook says how to lint, for example:
+If `AGENTS.md`, `CLAUDE.md`, `.cursorrules` or a similar agent playbook says how to
+lint, for example:
 
 ```markdown
 - Solidity lint: `npm run lint:sol`
