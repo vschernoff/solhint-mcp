@@ -20,8 +20,11 @@ Copyright (c) 2017-2026 Protofire
 
 Copyright (c) 2026 Vitaliy Chernov
   Subsequent modifications in this repository, including the autofix tools
-  (`fix_solidity`, `fix_file`), the parser-error handling, the unscoped
-  package name, and everything under pro/.
+  (`fix_solidity`, `fix_file`), readable parser errors, the unscoped package
+  name, and the standalone packaging, CI and test additions.
+
+  Note: the files listed above are attributed by original authorship. Several
+  have since been modified here; the published package ships src/ only.
 
 Solhint itself — https://github.com/protofire/solhint — is a separate MIT
 project maintained by Protofire, and is a dependency of this package rather
