@@ -159,6 +159,13 @@ writes to stdout synchronously is redirected to stderr while linting so it canno
 the MCP channel. Full plugin isolation, cancellation, and lint timeouts are deferred to a
 worker-based release.
 
+## MCP Registry
+
+Listed as `io.github.vschernoff/solhint-mcp`. `server.json` in this repository is the
+registry manifest; its `name` must stay identical to `mcpName` in `package.json`, and
+both version fields must match the published npm version, or a registry publish is
+rejected.
+
 ## Credits and licence
 
 MIT. The linting runner, tool surface and test suite were originally written by

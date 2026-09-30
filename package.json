@@ -1,6 +1,7 @@
 {
   "name": "solhint-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "mcpName": "io.github.vschernoff/solhint-mcp",
   "description": "MCP server for Solhint — lint and autofix Solidity smart contracts from any MCP client (Claude Code, Codex, Cursor, and others)",
   "main": "src/index.js",
   "bin": {
