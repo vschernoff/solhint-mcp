@@ -50,8 +50,22 @@ On native Windows, Claude Code requires `cmd /c`:
 claude mcp add solhint -- cmd /c npx -y solhint-mcp
 ```
 
-**OpenAI Codex** — add the JSON block above to the MCP server configuration in
-`~/.codex/config.toml` or the equivalent for your Codex client.
+**OpenAI Codex** — Codex uses TOML, not the JSON block above, and shares one
+configuration across the Codex CLI, the ChatGPT desktop app and the IDE extension.
+From the Solidity project directory:
+
+```bash
+codex mcp add solhint -- npx -y solhint-mcp
+```
+
+Or add it by hand to `~/.codex/config.toml`, or to `.codex/config.toml` to scope it
+to one project:
+
+```toml
+[mcp_servers.solhint]
+command = "npx"
+args = ["-y", "solhint-mcp"]
+```
 
 **Cursor / Windsurf** — add the JSON block above to the editor's MCP settings.
 
