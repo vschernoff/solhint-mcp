@@ -17,13 +17,12 @@ function createServer({ runner }) {
       // — which are long and tell the model nothing — come last.
       instructions:
         'Lints and autofixes Solidity with Solhint. ' +
-        'Run lint_file or lint_project before treating Solidity work as finished; ' +
-        'a contract that compiles can still carry security and gas problems this catches. ' +
-        'Use fix_solidity or fix_file to apply the fixes Solhint can make itself rather ' +
-        'than editing those by hand — fix_file previews by default and only writes when ' +
-        'called with write: true. Use explain_rule to explain a violation before changing ' +
-        'code to satisfy it. Report what remains after fixing; do not present a partial ' +
-        'fix as a clean result. ' +
+        'Run lint_file or lint_project before treating Solidity work as finished: it ' +
+        'catches style, gas and some security problems the compiler does not. It is a ' +
+        'linter, not a security analyser, so a clean result does not prove safety. ' +
+        'Use fix_solidity or fix_file for the fixes Solhint can make itself rather than ' +
+        'editing by hand; fix_file previews unless called with write: true. ' +
+        'Report what remains after fixing; never present a partial fix as a clean result. ' +
         `This server lints one project only, rooted at ${runner.projectRoot}; ` +
         'start another server process for a different project. ' +
         `${runner.describeResolution()}.`,
