@@ -19,7 +19,7 @@ jobs:
         run: docker build -t solhint-mcp:ci .
 
       - name: Image size
-        run: docker image inspect solhint-mcp:ci --format 'size: {{.Size}} bytes'
+        run: docker image inspect solhint-mcp:ci --format 'image size {{.Size}} bytes'
 
       # A build that succeeds proves nothing about the server starting, so the image is
       # run against a real project and driven over the MCP protocol it actually speaks.
