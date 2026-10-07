@@ -159,6 +159,18 @@ writes to stdout synchronously is redirected to stderr while linting so it canno
 the MCP channel. Full plugin isolation, cancellation, and lint timeouts are deferred to a
 worker-based release.
 
+## Docker
+
+```bash
+docker build -t solhint-mcp .
+docker run -i --rm -v "$PWD":/project solhint-mcp
+```
+
+The server lints whatever directory it starts in, so the Solidity project is mounted at
+`/project`, which is the image's working directory. `-i` is required because the server
+speaks MCP over stdio; no port is exposed. A Solhint installed in the mounted project
+takes precedence over the image's own copy.
+
 ## MCP Registry
 
 Listed as `io.github.vschernoff/solhint-mcp`. `server.json` in this repository is the
