@@ -1,0 +1,77 @@
+# The Dockerfile is what Glama's automated safety and quality checks build, and a
+# server only gets indexed for search once those pass. Building it here means it is
+# verified on every change rather than once by hand.
+name: Docker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the image
+        run: docker build -t solhint-mcp:ci .
+
+      - name: Image size
+        run: docker image inspect solhint-mcp:ci --format 'size: {{.Size}} bytes'
+
+      # A build that succeeds proves nothing about the server starting, so the image is
+      # run against a real project and driven over the MCP protocol it actually speaks.
+      - name: Create a Solidity project to lint
+        run: |
+          mkdir -p fixture/contracts
+          cat > fixture/.solhint.json <<'EOF'
+          { "extends": "solhint:recommended" }
+          EOF
+          cat > fixture/contracts/Vault.sol <<'EOF'
+          pragma solidity ^0.8.0;
+          contract Vault {
+            uint balance;
+            function withdraw(uint amount) public {
+              require(balance >= amount);
+              balance -= amount;
+            }
+          }
+          EOF
+
+      - name: Speak MCP to the container
+        run: |
+          {
+            echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}'
+            echo '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+            echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+            echo '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"lint_file","arguments":{"filePath":"contracts/Vault.sol"}}}'
+            sleep 5
+          } | docker run -i --rm -v "$PWD/fixture":/project solhint-mcp:ci > out.jsonl
+
+          echo "--- container output ---"
+          cat out.jsonl
+
+          node -e '
+            const lines = require("fs").readFileSync("out.jsonl", "utf8").split("\n").filter(Boolean)
+            const msgs = lines.map((l) => { try { return JSON.parse(l) } catch { return null } }).filter(Boolean)
+
+            const init = msgs.find((m) => m.id === 1)
+            if (!init?.result?.serverInfo?.name) throw new Error("no serverInfo in the initialize response")
+            console.log("serverInfo:", JSON.stringify(init.result.serverInfo))
+
+            const tools = msgs.find((m) => m.id === 2)?.result?.tools
+            if (!Array.isArray(tools) || tools.length !== 7) {
+              throw new Error(`expected 7 tools, got ${tools ? tools.length : "none"}`)
+            }
+            console.log("tools:", tools.map((t) => t.name).join(", "))
+
+            const lint = msgs.find((m) => m.id === 3)?.result?.content?.[0]?.text || ""
+            if (!/\d+ error\(s\), \d+ warning\(s\)/.test(lint)) {
+              throw new Error("lint_file did not return a summary:\n" + lint.slice(0, 300))
+            }
+            console.log("lint_file:", lint.split("\n").filter((l) => l.trim())[1])
+
+            console.log("\nContainer speaks MCP and lints a mounted project.")
+          '
