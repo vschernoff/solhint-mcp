@@ -1,28 +1,20 @@
 # solhint-mcp
 
-An MCP server that exposes Solhint as tools for any MCP client — Claude Code, OpenAI
-Codex, Cursor, Windsurf, Claude Desktop, and anything else that speaks the protocol.
-Nothing in it is specific to one vendor.
+Lint and autofix Solidity smart contracts with [Solhint](https://github.com/protofire/solhint),
+from any MCP client — Claude Code, OpenAI Codex, Cursor, Windsurf, Claude Desktop, and
+anything else that speaks the protocol. Nothing in it is specific to one vendor.
 
-The server runs Solhint through its JavaScript API. It does not start a shell, invoke
-`npx solhint`, make update checks, or parse CLI output.
+Your agent gets seven tools: `lint_solidity`, `lint_file`, `lint_project`,
+`fix_solidity`, `fix_file`, `explain_rule` and `get_config`.
 
-Solhint's maintainer merged a change pointing Solhint's CLI at this package
-([protofire/solhint#801](https://github.com/protofire/solhint/pull/801)). It ships in
-the next Solhint release.
-
-## Requirements
-
-- Node.js 20 or newer.
-- One server process per Solidity project.
-
-The process working directory is the project root. Start another server process for a
-different project.
+> Solhint's CLI points users at this package —
+> [protofire/solhint#801](https://github.com/protofire/solhint/pull/801), shipped in
+> Solhint 6.2.5.
 
 ## Installation
 
-Most clients are configured with a JSON block. Add this to your client's MCP
-configuration, with the Solidity project as the working directory:
+Add this to your MCP client's configuration, with the Solidity project as the working
+directory:
 
 ```json
 {
@@ -35,8 +27,20 @@ configuration, with the Solidity project as the working directory:
 }
 ```
 
-On native Windows, clients that launch servers through `npx` generally need
-`"command": "cmd"` with `"args": ["/c", "npx", "-y", "solhint-mcp"]`.
+Requires **Node.js 20 or newer**. On native Windows, clients that launch servers through
+`npx` generally need `"command": "cmd"` with `"args": ["/c", "npx", "-y", "solhint-mcp"]`.
+
+One server process lints one project: its working directory is the project root, so
+start another process for a different project. A Solhint installed in that project takes
+precedence over the copy bundled here.
+
+<details>
+<summary>How it runs Solhint</summary>
+
+The server calls Solhint through its JavaScript API. It does not start a shell, invoke
+`npx solhint`, make update checks, or parse CLI output.
+
+</details>
 
 ### Client-specific shortcuts
 
