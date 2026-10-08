@@ -7,6 +7,10 @@ Nothing in it is specific to one vendor.
 The server runs Solhint through its JavaScript API. It does not start a shell, invoke
 `npx solhint`, make update checks, or parse CLI output.
 
+Solhint's maintainer merged a change pointing Solhint's CLI at this package
+([protofire/solhint#801](https://github.com/protofire/solhint/pull/801)). It ships in
+the next Solhint release.
+
 ## Requirements
 
 - Node.js 20 or newer.
