@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.vschernoff/solhint-mcp",
-  "description": "MCP server for Solhint — lint and autofix Solidity smart contracts from any MCP client (Claude Code, Codex, Cursor, and others)",
+  "description": "MCP server for Solhint — lint and autofix Solidity smart contracts from any MCP client",
   "repository": {
     "url": "https://github.com/vschernoff/solhint-mcp",
     "source": "github"
