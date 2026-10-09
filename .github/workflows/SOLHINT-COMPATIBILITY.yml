@@ -24,7 +24,7 @@ jobs:
         # missing plugin.
         solhint: ['6.1.0', '6.2.4']
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -40,7 +40,7 @@ jobs:
     # of this repository — it tells us the range needs widening or the runner fixing.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 22
