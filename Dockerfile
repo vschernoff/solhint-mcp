@@ -7,7 +7,7 @@
 #
 # It speaks MCP over stdio, so -i is required and no port is exposed.
 
-FROM node:20-alpine
+FROM node:25-alpine
 
 # Install production dependencies first so this layer is cached across source edits.
 WORKDIR /opt/solhint-mcp
