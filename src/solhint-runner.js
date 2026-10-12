@@ -57,7 +57,9 @@ function loadResolution(candidate) {
   try {
     configApi = candidate.require(configPath)
   } catch (error) {
-    throw new Error(`Cannot load Solhint's configuration API at ${configPath}: ${error.message}`)
+    throw new Error(`Cannot load Solhint's configuration API at ${configPath}: ${error.message}`, {
+      cause: error,
+    })
   }
   for (const functionName of ['applyExtends', 'loadConfig', 'loadConfigForFile']) {
     if (typeof configApi[functionName] !== 'function') {
@@ -177,7 +179,8 @@ function createSolhintRunner({ projectRoot = process.cwd(), forceBundled = false
     } catch (error) {
       if (error instanceof TypeError) {
         throw new Error(
-          `Could not parse the Solidity source: it is not valid Solidity, or uses syntax this parser does not support (${error.message})`
+          `Could not parse the Solidity source: it is not valid Solidity, or uses syntax this parser does not support (${error.message})`,
+          { cause: error }
         )
       }
       throw error
