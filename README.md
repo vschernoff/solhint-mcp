@@ -98,6 +98,13 @@ working directory. See Anthropic's current
 `lint_project` autodetects `contracts/**/*.sol`, then `src/**/*.sol`, and finally
 `**/*.sol`. Paths and patterns outside the project root are rejected.
 
+The optional `config` argument accepts rule maps and the built-in `solhint:recommended`
+and `solhint:all` presets. It does **not** accept an `extends` path, a shareable config
+package name, or `plugins`: Solhint loads those with `require`, so honouring them from a
+tool argument would let anything able to call the tool run code in the server process.
+Declare them in the project's own `.solhint.json`, which carries the same trust as
+running `npx solhint` in that directory.
+
 The `fix_*` tools apply Solhint's own autofixes and then re-lint, so what they report
 as remaining is what is genuinely left rather than the pre-fix report. `fix_solidity`
 returns the corrected source and touches nothing on disk. `fix_file` previews by

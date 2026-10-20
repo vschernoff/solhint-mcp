@@ -32,6 +32,11 @@ server at an untrusted repository therefore runs that repository's JavaScript wi
 privileges of the server process — the same exposure as running `npx solhint` in that
 directory, but reached automatically by an agent rather than deliberately by a person.
 
+Fixed in 0.1.4: a config passed as a **tool argument** may no longer carry an `extends`
+path or `plugins`. Before that, an agent — or a prompt injection in a repository the agent
+was reading — could call a lint or fix tool with a config whose `extends` named a
+JavaScript file, and that file ran in the server process. See the advisory for details.
+
 Mitigations in place today:
 
 - A plugin writing synchronously to stdout is redirected to stderr during linting, so it

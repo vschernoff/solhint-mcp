@@ -67,6 +67,65 @@ test('explicit source config replaces the project config', () => {
   }
 })
 
+// An agent-supplied config reaches the server from a model that may be acting on text it
+// read in the repository. Solhint resolves an absolute `extends` with require(), so before
+// this was checked, a crafted config argument executed arbitrary JavaScript in the server
+// process. These tests execute the attempt and assert the payload never runs.
+test('a config argument cannot execute code through extends or plugins', () => {
+  const root = makeProject({})
+  try {
+    const runner = createSolhintRunner({ projectRoot: root, forceBundled: true })
+    const source = 'pragma solidity ^0.8.24; contract C {}'
+
+    // Each case needs its own payload file: Node caches modules, so a second require of
+    // the same path returns silently without re-running it and would mask a failure.
+    let n = 0
+    const attempt = (config) => {
+      n += 1
+      const payload = path.join(root, `payload${n}.js`)
+      const marker = path.join(root, `marker${n}`)
+      fs.writeFileSync(
+        payload,
+        `require('fs').writeFileSync(${JSON.stringify(marker)}, 'x')\nmodule.exports = { rules: {} }\n`
+      )
+      assert.throws(
+        () => runner.lintSource(source, config(payload)),
+        /may only name a built-in preset|not accepted here/
+      )
+      assert.equal(fs.existsSync(marker), false, 'the payload must not have been executed')
+    }
+
+    attempt((payload) => ({ extends: payload, rules: {} }))
+    attempt((payload) => ({ extends: [payload], rules: {} }))
+    attempt((payload) => ({ plugins: [payload], rules: {} }))
+
+    // fix_solidity shares sourceConfig, so it is closed by the same check.
+    const payload = path.join(root, 'payloadFix.js')
+    const marker = path.join(root, 'markerFix')
+    fs.writeFileSync(
+      payload,
+      `require('fs').writeFileSync(${JSON.stringify(marker)}, 'x')\nmodule.exports = { rules: {} }\n`
+    )
+    assert.throws(() => runner.fixSource(source, { extends: payload, rules: {} }))
+    assert.equal(fs.existsSync(marker), false)
+  } finally {
+    cleanupProject(root)
+  }
+})
+
+test('built-in presets are still accepted in a config argument', () => {
+  const root = makeProject({})
+  try {
+    const runner = createSolhintRunner({ projectRoot: root, forceBundled: true })
+    const source = 'pragma solidity ^0.8.24; contract C {}'
+    assert.doesNotThrow(() => runner.lintSource(source, { extends: 'solhint:recommended' }))
+    assert.doesNotThrow(() => runner.lintSource(source, { extends: ['solhint:all'] }))
+    assert.doesNotThrow(() => runner.lintSource(source, { rules: { quotes: 'off' } }))
+  } finally {
+    cleanupProject(root)
+  }
+})
+
 test('project config is used for source linting', () => {
   const root = makeProject({
     '.solhint.json': JSON.stringify({ rules: { quotes: ['error', 'double'] } }),

@@ -155,6 +155,33 @@ function createSolhintRunner({ projectRoot = process.cwd(), forceBundled = false
     return { config, configPath }
   }
 
+  // A config supplied through a tool argument is untrusted: it reaches the server from
+  // the agent, which may be acting on text it read in the repository. Solhint resolves an
+  // absolute `extends` path with require(), so an unchecked config is a code-execution
+  // path into this process. Only the built-in `solhint:*` presets are allowed here.
+  // The project's own .solhint.json is deliberately not subject to this: it carries the
+  // same trust as running `npx solhint` in that directory.
+  function assertSafeExplicitConfig(config) {
+    if (config.extends !== undefined) {
+      const entries = Array.isArray(config.extends) ? config.extends : [config.extends]
+      for (const entry of entries) {
+        if (typeof entry !== 'string' || !entry.startsWith('solhint:')) {
+          throw new Error(
+            `config.extends may only name a built-in preset (solhint:recommended, ` +
+              `solhint:all), not ${JSON.stringify(entry)}. A path or package name there ` +
+              `would be loaded as code. Put it in the project's .solhint.json instead.`
+          )
+        }
+      }
+    }
+    if (config.plugins !== undefined) {
+      throw new Error(
+        'config.plugins is not accepted here, because a plugin is loaded as code. ' +
+          "Declare plugins in the project's .solhint.json instead."
+      )
+    }
+  }
+
   function sourceConfig(explicitConfig) {
     if (explicitConfig !== undefined) {
       if (!explicitConfig || typeof explicitConfig !== 'object' || Array.isArray(explicitConfig)) {
@@ -163,6 +190,7 @@ function createSolhintRunner({ projectRoot = process.cwd(), forceBundled = false
       if (Object.keys(explicitConfig).length === 0) {
         throw new Error('config cannot be empty; enable rules or extend a preset')
       }
+      assertSafeExplicitConfig(explicitConfig)
       return explicitConfig
     }
     const { config } = loadProjectConfig()
