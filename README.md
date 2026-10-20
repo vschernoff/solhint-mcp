@@ -188,11 +188,9 @@ rejected.
 
 ## Credits and licence
 
-MIT. The linting runner, tool surface and test suite were originally written by
-Diego Bale ([@dbale-arg](https://github.com/dbale-arg)) for
-[protofire/solhint](https://github.com/protofire/solhint) and moved here with his
-agreement, so the MCP server can be maintained and released independently of
-Solhint's release cycle. See [NOTICE](NOTICE) for the file-level breakdown.
+MIT. The linting runner, tool surface and test suite are Diego Bale's
+([@dbale-arg](https://github.com/dbale-arg)) implementation, used here with his
+agreement under MIT. See [NOTICE](NOTICE) for the file-level breakdown.
 
 Solhint is maintained by [Protofire](https://protofire.io). This package depends on
 it; it is not part of it.
