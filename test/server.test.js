@@ -105,6 +105,47 @@ function startServer(projectRoot) {
   }
 }
 
+// Some clients keep only the first ~512 characters of the instructions field. Before this
+// was checked it ran to 716 characters and interpolated the project root, so its length —
+// and therefore what survived truncation — changed with how deep the project path was.
+test(
+  'instructions fit the truncation budget and do not vary by path',
+  { timeout: 20000 },
+  async () => {
+    const BUDGET = 512
+    const shallow = makeProject({})
+    const deep = path.join(makeProject({}), 'a', 'bb', 'ccc', 'dddd', 'eeeee', 'ffffff')
+    fs.mkdirSync(deep, { recursive: true })
+    const read = async (root) => {
+      const server = startServer(root)
+      try {
+        const initialized = await server.request({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'initialize',
+          params: {
+            protocolVersion: '2025-11-25',
+            capabilities: {},
+            clientInfo: { name: 'test', version: '1.0.0' },
+          },
+        })
+        return initialized.result.instructions
+      } finally {
+        await stopServer(server)
+      }
+    }
+    const a = await read(shallow)
+    const b = await read(deep)
+
+    assert.ok(
+      a.length <= BUDGET,
+      `instructions are ${a.length} characters, over the ${BUDGET} budget by ${a.length - BUDGET}`
+    )
+    assert.equal(a, b, 'instructions must not change with the project path: keep the string fixed')
+    assert.doesNotMatch(a, /\//, 'instructions must not contain a filesystem path')
+  }
+)
+
 test(
   'stdio server validates tools and stays alive after bad calls',
   { timeout: 20000 },

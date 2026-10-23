@@ -15,17 +15,18 @@ function createServer({ runner }) {
       // Codex and other clients read this as server-wide guidance and may only keep
       // the first ~512 characters, so the actionable part comes first and the paths
       // — which are long and tell the model nothing — come last.
+      // Some clients keep only the first ~512 characters of this field, so it is a fixed
+      // string with nothing interpolated: it must not change length with the project path.
+      // Which Solhint is in use, and where, is prefixed to every tool result instead.
       instructions:
         'Lints and autofixes Solidity with Solhint. ' +
         'Run lint_file or lint_project before treating Solidity work as finished: it ' +
-        'catches style, gas and some security problems the compiler does not. It is a ' +
-        'linter, not a security analyser, so a clean result does not prove safety. ' +
-        'Use fix_solidity or fix_file for the fixes Solhint can make itself rather than ' +
-        'editing by hand; fix_file previews unless called with write: true. ' +
-        'Report what remains after fixing; never present a partial fix as a clean result. ' +
-        `This server lints one project only, rooted at ${runner.projectRoot}; ` +
-        'start another server process for a different project. ' +
-        `${runner.describeResolution()}.`,
+        'catches style, gas and some security issues the compiler does not. ' +
+        'It is a linter, not a security analyser — a clean result does not prove safety. ' +
+        'Prefer fix_solidity or fix_file over hand edits; fix_file previews unless ' +
+        'write: true. ' +
+        'Report what remains; never present a partial fix as clean, and never silence a ' +
+        'finding with solhint-disable or a loosened .solhint.json unless asked.',
     }
   )
 
