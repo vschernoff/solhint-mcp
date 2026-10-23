@@ -27,8 +27,9 @@ directory:
 }
 ```
 
-Requires **Node.js 20 or newer**. On native Windows, clients that launch servers through
-`npx` generally need `"command": "cmd"` with `"args": ["/c", "npx", "-y", "solhint-mcp"]`.
+Requires **Node.js 20 or newer**. On native Windows, a client that cannot start the
+server may need `"command": "cmd"` with `"args": ["/c", "npx", "-y", "solhint-mcp"]`:
+Node cannot spawn `npx.cmd` directly without a shell.
 
 One server process lints one project: its working directory is the project root, so
 start another process for a different project. A Solhint installed in that project takes
@@ -52,7 +53,8 @@ claude mcp add solhint -- npx -y solhint-mcp
 
 The default local scope associates the server with the current project. Use
 `--scope project` before `--` if the configuration should be committed in `.mcp.json`.
-On native Windows, Claude Code requires `cmd /c`:
+On native Windows, if the server fails to start, wrapping `npx` in `cmd /c` is the usual
+fix — Node cannot spawn `npx.cmd` directly without a shell:
 
 ```bash
 claude mcp add solhint -- cmd /c npx -y solhint-mcp
