@@ -142,7 +142,7 @@ test('a degraded run is still reported when FORCE_COLOR is set', { timeout: 3000
       const text = called.result.content[0].text
       assert.match(text, /degraded/, `FORCE_COLOR=${forceColor} must still report a degraded run`)
       assert.match(text, /definitely-not-installed/)
-      assert.doesNotMatch(text, /\u001B\[/, 'escape sequences must not reach the agent')
+      assert.ok(!text.includes('\u001B['), 'escape sequences must not reach the agent')
     } finally {
       await stopServer(server)
     }
