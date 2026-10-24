@@ -312,11 +312,18 @@ function withProtocolStdoutProtected(action) {
   }
 }
 
+// Solhint colours these warnings with chalk. Colour is off for a piped stdout, but
+// FORCE_COLOR in the environment turns it back on, and then every captured line starts
+// with an escape sequence. Matching the raw line would miss them, and a degraded run
+// would look clean again — which is the whole failure this reporting exists to prevent.
+// eslint-disable-next-line no-control-regex
+const ANSI = /\u001B\[[0-?]*[ -/]*[@-~]/g
+
 // Only Solhint's own diagnostics, so a plugin writing chatter to stderr is not reported
 // to the agent as a problem with the run.
 function solhintWarnings(text) {
   const seen = new Set()
-  for (const line of text.split('\n')) {
+  for (const line of text.replace(ANSI, '').split('\n')) {
     const match = line.match(/^\[solhint\]\s*(?:Warning|Error):\s*(.+?)\s*$/)
     if (match) seen.add(match[1])
   }

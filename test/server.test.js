@@ -38,10 +38,11 @@ function removeProject(root) {
   fs.rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
 }
 
-function startServer(projectRoot) {
+function startServer(projectRoot, extraEnv = {}) {
   const child = spawn(process.execPath, [serverEntry, '--bundled-solhint'], {
     cwd: projectRoot,
     stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env, ...extraEnv },
   })
   const pending = new Map()
   const invalidLines = []
@@ -104,6 +105,49 @@ function startServer(projectRoot) {
     stderr: () => stderr,
   }
 }
+
+// Solhint colours its warnings with chalk. With FORCE_COLOR set, each captured line
+// starts with an escape sequence, and a match against the raw line misses it — so a
+// degraded run would be reported as clean, the exact failure this reporting prevents.
+// chalk decides colour support when it loads, so this has to be a child process.
+test('a degraded run is still reported when FORCE_COLOR is set', { timeout: 30000 }, async () => {
+  const root = makeProject({
+    '.solhint.json': JSON.stringify({
+      extends: 'solhint:recommended',
+      plugins: ['definitely-not-installed'],
+      rules: { 'no-such-rule-at-all': 'error' },
+    }),
+    'contracts/C.sol': 'pragma solidity ^0.8.24; contract C {}',
+  })
+  for (const forceColor of ['1', '3']) {
+    const server = startServer(root, { FORCE_COLOR: forceColor })
+    try {
+      await server.request({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'test', version: '1.0.0' },
+        },
+      })
+      server.send({ jsonrpc: '2.0', method: 'notifications/initialized' })
+      const called = await server.request({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'lint_file', arguments: { filePath: 'contracts/C.sol' } },
+      })
+      const text = called.result.content[0].text
+      assert.match(text, /degraded/, `FORCE_COLOR=${forceColor} must still report a degraded run`)
+      assert.match(text, /definitely-not-installed/)
+      assert.doesNotMatch(text, /\u001B\[/, 'escape sequences must not reach the agent')
+    } finally {
+      await stopServer(server)
+    }
+  }
+})
 
 // Some clients keep only the first ~512 characters of the instructions field. Before this
 // was checked it ran to 716 characters and interpolated the project root, so its length —
