@@ -71,6 +71,55 @@ test('explicit source config replaces the project config', () => {
 // read in the repository. Solhint resolves an absolute `extends` with require(), so before
 // this was checked, a crafted config argument executed arbitrary JavaScript in the server
 // process. These tests execute the attempt and assert the payload never runs.
+// Solhint reports a degraded run — an unloadable plugin, an unknown rule id — on stderr
+// and then lints anyway, checking less than the project asked for. Those warnings used to
+// be discarded with the stdout redirection, so the agent saw an ordinary result over a
+// broken config, and get_config printed a tick over it.
+test('a degraded run is reported, not swallowed', () => {
+  const root = makeProject({
+    '.solhint.json': JSON.stringify({
+      extends: 'solhint:recommended',
+      plugins: ['definitely-not-installed'],
+      rules: { 'no-such-rule-at-all': 'error' },
+    }),
+    'contracts/C.sol': 'pragma solidity ^0.8.24; contract C {}',
+  })
+  try {
+    const service = createToolService({
+      runner: createSolhintRunner({ projectRoot: root, forceBundled: true }),
+    })
+    for (const name of ['lint_file', 'get_config']) {
+      const args = name === 'lint_file' ? { filePath: 'contracts/C.sol' } : {}
+      const text = service.call(name, args).content[0].text
+      assert.match(text, /degraded/, `${name} must say the run was degraded`)
+      assert.match(text, /definitely-not-installed/, `${name} must name the plugin`)
+      assert.match(text, /no-such-rule-at-all/, `${name} must name the unknown rule`)
+    }
+    // The tick must not appear over a broken config.
+    assert.doesNotMatch(service.call('get_config', {}).content[0].text, /✅/)
+  } finally {
+    cleanupProject(root)
+  }
+})
+
+test('a sound project reports no run-health warning', () => {
+  const root = makeProject({
+    '.solhint.json': JSON.stringify({ extends: 'solhint:recommended' }),
+    'contracts/C.sol': 'pragma solidity ^0.8.24; contract C {}',
+  })
+  try {
+    const service = createToolService({
+      runner: createSolhintRunner({ projectRoot: root, forceBundled: true }),
+    })
+    for (const name of ['lint_file', 'get_config']) {
+      const args = name === 'lint_file' ? { filePath: 'contracts/C.sol' } : {}
+      assert.doesNotMatch(service.call(name, args).content[0].text, /degraded/)
+    }
+  } finally {
+    cleanupProject(root)
+  }
+})
+
 test('a config argument cannot execute code through extends or plugins', () => {
   const root = makeProject({})
   try {

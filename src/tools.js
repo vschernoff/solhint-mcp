@@ -253,6 +253,18 @@ function enabled(value) {
 
 function formatConfig(runner) {
   const { config, configPath, effectiveConfig } = runner.getProjectConfig()
+  // Solhint reports an unloadable plugin or an unknown rule id only when it loads rules
+  // for a lint, not when the config is read. get_config is where someone looks to find
+  // out whether the config is sound, so it provokes those diagnostics with a throwaway
+  // lint of a trivial source. No config argument: that makes the runner use the
+  // project's own, which is the trusted path and not subject to the tool-argument guard.
+  if (configPath) {
+    try {
+      runner.lintSource('pragma solidity ^0.8.0;', undefined, 'solhint-mcp-config-probe.sol')
+    } catch {
+      // A config broken enough to fail outright is reported by the caller's error path.
+    }
+  }
   if (!configPath) {
     return (
       'No project Solhint config found. The default for `lint_solidity` is:\n\n' +
@@ -264,20 +276,64 @@ function formatConfig(runner) {
   if (!enabled(rules['gas-custom-errors'])) suggestions.push('Add `gas-custom-errors`')
   if (!enabled(rules['reason-string'])) suggestions.push('Add `reason-string`')
   if (!enabled(rules['compiler-version'])) suggestions.push('Add `compiler-version`')
+  // The tick is a claim about the whole config, so it is only safe to make when nothing
+  // in the run was degraded. A plugin that did not load, or a rule Solhint does not
+  // recognise, is handled by the caller's run-health banner — this must not contradict it
+  // by reporting the config as sound. The claim is also narrowed to what is checked.
   const suggestionText = suggestions.length
     ? `\n\n**Suggestions:**\n${suggestions.map((item) => `- ${item}`).join('\n')}`
-    : '\n\n✅ Effective config already enables the recommended checks.'
+    : '\n\nThe three checks suggested here are enabled. This says nothing about the ' +
+      'other rules, and nothing about whether every configured rule loaded — see any ' +
+      'run-health warning above.'
   return `**Found:** \`${configPath}\`\n\n\`\`\`json\n${JSON.stringify(config, null, 2)}\n\`\`\`${suggestionText}`
 }
 
+// Solhint reports a degraded run on stderr and carries on: a plugin that will not load,
+// or a rule id it does not recognise, produce a warning and then a lint that silently
+// checks less than the project asked for. Redirecting stdout here used to discard those
+// warnings along with any plugin's stray output, so the agent saw a clean result over a
+// broken config. They are captured instead, and reported with the findings.
 function withProtocolStdoutProtected(action) {
-  const originalWrite = process.stdout.write
-  process.stdout.write = process.stderr.write.bind(process.stderr)
-  try {
-    return action()
-  } finally {
-    process.stdout.write = originalWrite
+  const originalStdoutWrite = process.stdout.write
+  const originalStderrWrite = process.stderr.write
+  const captured = []
+  const capture = (chunk, encoding, callback) => {
+    captured.push(typeof chunk === 'string' ? chunk : String(chunk))
+    return originalStderrWrite.call(process.stderr, chunk, encoding, callback)
   }
+  process.stdout.write = capture
+  process.stderr.write = capture
+  try {
+    const value = action()
+    return { value, warnings: solhintWarnings(captured.join('')) }
+  } finally {
+    process.stdout.write = originalStdoutWrite
+    process.stderr.write = originalStderrWrite
+  }
+}
+
+// Only Solhint's own diagnostics, so a plugin writing chatter to stderr is not reported
+// to the agent as a problem with the run.
+function solhintWarnings(text) {
+  const seen = new Set()
+  for (const line of text.split('\n')) {
+    const match = line.match(/^\[solhint\]\s*(?:Warning|Error):\s*(.+?)\s*$/)
+    if (match) seen.add(match[1])
+  }
+  return [...seen]
+}
+
+// A lint that ran degraded is not a clean result, and an agent that is told only the
+// findings will report it as one.
+function withRunHealth(text, warnings) {
+  if (!warnings || warnings.length === 0) return text
+  const lines = warnings.map((warning) => `- ${warning}`).join('\n')
+  return (
+    `⚠️ **This run was degraded — Solhint checked less than the project asked for.**\n` +
+    `${lines}\n\n` +
+    `Treat the result below as incomplete until this is fixed. ` +
+    `A finding that is absent may only mean the rule never ran.\n\n${text}`
+  )
 }
 
 function formatFixResult({ fixed, ruleIds, output, reports }, { file = null, written = false }) {
@@ -299,7 +355,7 @@ function createToolService({ runner }) {
   const resolutionText = runner.describeResolution()
   function call(name, args = {}) {
     try {
-      return withProtocolStdoutProtected(() => {
+      const result = withProtocolStdoutProtected(() => {
         if (!args || typeof args !== 'object' || Array.isArray(args)) {
           throw new Error('arguments must be an object')
         }
@@ -358,6 +414,11 @@ function createToolService({ runner }) {
         if (name === 'get_config') return success(`${resolutionText}\n\n${formatConfig(runner)}`)
         throw new Error(`Unknown tool: ${name}`)
       })
+      const first = result.value.content[0]
+      if (first && first.type === 'text') {
+        first.text = withRunHealth(first.text, result.warnings)
+      }
+      return result.value
     } catch (error) {
       return failure(error, resolutionText)
     }

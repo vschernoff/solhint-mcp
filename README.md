@@ -107,6 +107,27 @@ tool argument would let anything able to call the tool run code in the server pr
 Declare them in the project's own `.solhint.json`, which carries the same trust as
 running `npx solhint` in that directory.
 
+## Run health
+
+Solhint reports a plugin it cannot load, or a rule id it does not recognise, as a warning
+and then lints anyway — checking less than the project asked for. A tool result that
+showed only the findings would be read as a clean pass over a broken config.
+
+Those warnings are captured and reported above the findings instead:
+
+```
+⚠️ This run was degraded — Solhint checked less than the project asked for.
+- Could not load solhint-plugin-foo, make sure it's installed and exports valid rules. Ignoring it.
+- Rule 'no-such-rule' doesn't exist
+
+Treat the result below as incomplete until this is fixed. A finding that is absent may
+only mean the rule never ran.
+```
+
+`get_config` provokes the same diagnostics with a throwaway lint, since Solhint only
+emits them when it loads rules, and `get_config` is where someone looks to find out
+whether the config is sound.
+
 The `fix_*` tools apply Solhint's own autofixes and then re-lint, so what they report
 as remaining is what is genuinely left rather than the pre-fix report. `fix_solidity`
 returns the corrected source and touches nothing on disk. `fix_file` previews by
