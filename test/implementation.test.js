@@ -71,6 +71,37 @@ test('explicit source config replaces the project config', () => {
 // read in the repository. Solhint resolves an absolute `extends` with require(), so before
 // this was checked, a crafted config argument executed arbitrary JavaScript in the server
 // process. These tests execute the attempt and assert the payload never runs.
+// The Anthropic Software Directory Policy 5.E requires that "MCP servers must provide all
+// applicable annotations for their tools, in particular readOnlyHint, destructiveHint, and
+// title". A tool added without them would ship and fail review rather than fail a test.
+test('every tool carries the annotations the directory requires', () => {
+  for (const tool of TOOL_DEFINITIONS) {
+    const a = tool.annotations
+    assert.ok(a, `${tool.name} has no annotations`)
+    assert.equal(typeof a.title, 'string', `${tool.name} needs a title`)
+    assert.ok(a.title.length > 0, `${tool.name} has an empty title`)
+    assert.equal(typeof a.readOnlyHint, 'boolean', `${tool.name} needs readOnlyHint`)
+    assert.equal(typeof a.destructiveHint, 'boolean', `${tool.name} needs destructiveHint`)
+    // A read-only tool cannot also be destructive; the pair would be incoherent.
+    if (a.readOnlyHint) assert.equal(a.destructiveHint, false, `${tool.name} is both`)
+  }
+})
+
+// fix_file is the only tool that writes, and only when asked. The annotation describes
+// what the tool can do rather than what a default call does, so it must say so.
+test('fix_file is the only tool annotated as writing', () => {
+  const writers = TOOL_DEFINITIONS.filter((t) => t.annotations.readOnlyHint === false)
+  assert.deepEqual(
+    writers.map((t) => t.name),
+    ['fix_file'],
+    'only fix_file touches the filesystem'
+  )
+  assert.equal(
+    TOOL_DEFINITIONS.find((t) => t.name === 'fix_file').annotations.destructiveHint,
+    true
+  )
+})
+
 // Solhint reports a degraded run — an unloadable plugin, an unknown rule id — on stderr
 // and then lints anyway, checking less than the project asked for. Those warnings used to
 // be discarded with the stdout redirection, so the agent saw an ordinary result over a

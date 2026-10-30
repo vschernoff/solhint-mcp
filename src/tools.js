@@ -5,6 +5,14 @@ const { globSync } = require('glob')
 const TOOL_DEFINITIONS = Object.freeze([
   {
     name: 'lint_solidity',
+    annotations: {
+      title: 'Lint Solidity source',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+      // Reads nothing and writes nothing: the source arrives as a string.
+    },
     description: 'Lint a Solidity source string with the project or supplied Solhint config.',
     inputSchema: {
       type: 'object',
@@ -18,6 +26,14 @@ const TOOL_DEFINITIONS = Object.freeze([
   },
   {
     name: 'lint_file',
+    annotations: {
+      title: 'Lint a Solidity file',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+      // Reads one file in the project. Writes nothing.
+    },
     description: 'Lint one Solidity file inside this server instance project.',
     inputSchema: {
       type: 'object',
@@ -34,6 +50,14 @@ const TOOL_DEFINITIONS = Object.freeze([
   },
   {
     name: 'lint_project',
+    annotations: {
+      title: 'Lint the Solidity project',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+      // Reads matching files in the project. Writes nothing.
+    },
     description: 'Lint Solidity files in this server instance project.',
     inputSchema: {
       type: 'object',
@@ -46,6 +70,14 @@ const TOOL_DEFINITIONS = Object.freeze([
   },
   {
     name: 'fix_solidity',
+    annotations: {
+      title: 'Autofix Solidity source',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+      // Returns corrected text. Touches no file.
+    },
     description:
       'Apply Solhint autofixes to a Solidity source string and return the corrected source. Does not touch any file.',
     inputSchema: {
@@ -60,6 +92,16 @@ const TOOL_DEFINITIONS = Object.freeze([
   },
   {
     name: 'fix_file',
+    annotations: {
+      title: 'Autofix a Solidity file',
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+      // Overwrites the file in place when called with write: true, which is why
+      // destructiveHint is set. It previews by default, but an annotation describes what
+      // the tool can do, not what it does on a default call.
+    },
     description:
       'Apply Solhint autofixes to one Solidity file. Previews the result by default; pass write: true to save it.',
     inputSchema: {
@@ -81,6 +123,14 @@ const TOOL_DEFINITIONS = Object.freeze([
   },
   {
     name: 'explain_rule',
+    annotations: {
+      title: 'Explain a Solhint rule',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+      // Reads Solhint's own rule metadata. Touches nothing in the project.
+    },
     description: 'Explain a known Solhint rule and suggest a correction.',
     inputSchema: {
       type: 'object',
@@ -91,6 +141,15 @@ const TOOL_DEFINITIONS = Object.freeze([
   },
   {
     name: 'get_config',
+    annotations: {
+      title: 'Show the Solhint config',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+      // Reads the project's config. The throwaway lint it runs to surface
+      // diagnostics writes nothing.
+    },
     description: 'Read the Solhint config for this server instance project.',
     inputSchema: {
       type: 'object',
