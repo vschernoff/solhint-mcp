@@ -216,6 +216,18 @@ registry manifest; its `name` must stay identical to `mcpName` in `package.json`
 both version fields must match the published npm version, or a registry publish is
 rejected.
 
+## Related
+
+- **[solhint-mcp-plugin](https://github.com/vschernoff/solhint-mcp-plugin)** — this server
+  as a Claude Code plugin. One command installs and configures it, and it adds a skill so
+  the agent lints Solidity without being asked:
+  `/plugin install solhint --marketplace vschernoff/solhint-mcp-plugin`
+- **[solidity-ai-kit](https://github.com/vschernoff/solidity-ai-kit)** — a wider setup
+  that configures several Solidity tools for an agent at once, with this server as its
+  linting component.
+- **[Solhint](https://github.com/protofire/solhint)** — the linter itself, maintained by
+  Protofire. This package depends on it; it is not part of it.
+
 ## Credits and licence
 
 MIT. The linting runner, tool surface and test suite are Diego Bale's
