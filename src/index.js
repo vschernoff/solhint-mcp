@@ -33,7 +33,11 @@ function createServer({ runner }) {
   for (const tool of TOOL_DEFINITIONS) {
     server.registerTool(
       tool.name,
-      { description: tool.description, inputSchema: fromJsonSchema(tool.inputSchema) },
+      {
+        description: tool.description,
+        inputSchema: fromJsonSchema(tool.inputSchema),
+        annotations: tool.annotations,
+      },
       async (args) => service.call(tool.name, args)
     )
   }
