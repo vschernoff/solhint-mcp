@@ -692,3 +692,16 @@ test('unparsable source reports a readable error instead of a parser crash', () 
     cleanupProject(root)
   }
 })
+
+test('server.json advertises the version that package.json and npm ship', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'))
+  const server = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'server.json'), 'utf8'))
+
+  // npm version does not touch server.json, so a release can leave it behind and
+  // the MCP Registry rejects the publish as a duplicate. Catch it here instead.
+  assert.equal(server.version, manifest.version)
+  for (const pkg of server.packages) {
+    assert.equal(pkg.version, manifest.version)
+    assert.equal(pkg.identifier, manifest.name)
+  }
+})
