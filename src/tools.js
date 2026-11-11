@@ -13,12 +13,19 @@ const TOOL_DEFINITIONS = Object.freeze([
       openWorldHint: false,
       // Reads nothing and writes nothing: the source arrives as a string.
     },
-    description: 'Lint a Solidity source string with the project or supplied Solhint config.',
+    description:
+      'Lint a Solidity source string that is not on disk yet — generated or pasted code. ' +
+      'For a file in the project use lint_file; to sweep the project use lint_project.',
     inputSchema: {
       type: 'object',
       properties: {
-        code: { type: 'string', minLength: 1, description: 'Solidity source code to lint' },
-        config: { type: 'object', description: 'Optional complete Solhint config object' },
+        code: { type: 'string', minLength: 1, description: 'Solidity source to lint' },
+        config: {
+          type: 'object',
+          description:
+            "Optional Solhint config, e.g. { extends: 'solhint:recommended' }. Rule maps and " +
+            "solhint:* presets only; 'extends' paths and 'plugins' are rejected.",
+        },
       },
       required: ['code'],
       additionalProperties: false,
@@ -34,14 +41,16 @@ const TOOL_DEFINITIONS = Object.freeze([
       openWorldHint: false,
       // Reads one file in the project. Writes nothing.
     },
-    description: 'Lint one Solidity file inside this server instance project.',
+    description:
+      'Lint one Solidity file in the project. Use when you know which file changed. The file ' +
+      'must exist on disk; for source not saved yet use lint_solidity, for a sweep use lint_project.',
     inputSchema: {
       type: 'object',
       properties: {
         filePath: {
           type: 'string',
           minLength: 1,
-          description: 'Path relative to the project root',
+          description: "Path to a .sol file, relative to the project root, e.g. 'contracts/Vault.sol'.",
         },
       },
       required: ['filePath'],
@@ -58,11 +67,19 @@ const TOOL_DEFINITIONS = Object.freeze([
       openWorldHint: false,
       // Reads matching files in the project. Writes nothing.
     },
-    description: 'Lint Solidity files in this server instance project.',
+    description:
+      'Lint many Solidity files at once. Use before treating Solidity work as finished, or when ' +
+      'you do not know which files changed. Without a pattern it tries contracts/** then src/**. ' +
+      'For one known file prefer lint_file; for source not saved yet use lint_solidity.',
     inputSchema: {
       type: 'object',
       properties: {
-        pattern: { type: 'string', minLength: 1, description: 'Optional project-relative glob' },
+        pattern: {
+          type: 'string',
+          minLength: 1,
+          description:
+            "Optional project-relative glob, e.g. 'contracts/**/*.sol'. Omit to autodetect.",
+        },
       },
       required: [],
       additionalProperties: false,
@@ -79,12 +96,18 @@ const TOOL_DEFINITIONS = Object.freeze([
       // Returns corrected text. Touches no file.
     },
     description:
-      'Apply Solhint autofixes to a Solidity source string and return the corrected source. Does not touch any file.',
+      'Apply Solhint autofixes to a Solidity source string and return the corrected source. ' +
+      'Touches no file — use it for source not saved yet; for a file on disk use fix_file.',
     inputSchema: {
       type: 'object',
       properties: {
-        code: { type: 'string', minLength: 1, description: 'Solidity source code to fix' },
-        config: { type: 'object', description: 'Optional complete Solhint config object' },
+        code: { type: 'string', minLength: 1, description: 'Solidity source to fix' },
+        config: {
+          type: 'object',
+          description:
+            "Optional Solhint config, e.g. { extends: 'solhint:recommended' }. Rule maps and " +
+            "solhint:* presets only; 'extends' paths and 'plugins' are rejected.",
+        },
       },
       required: ['code'],
       additionalProperties: false,
@@ -103,14 +126,15 @@ const TOOL_DEFINITIONS = Object.freeze([
       // the tool can do, not what it does on a default call.
     },
     description:
-      'Apply Solhint autofixes to one Solidity file. Previews the result by default; pass write: true to save it.',
+      'Apply Solhint autofixes to one Solidity file. Previews by default; pass write: true to save. ' +
+      'Prefer this over editing by hand after lint_file reports fixable findings.',
     inputSchema: {
       type: 'object',
       properties: {
         filePath: {
           type: 'string',
           minLength: 1,
-          description: 'Path relative to the project root',
+          description: "Path to a .sol file, relative to the project root, e.g. 'contracts/Vault.sol'.",
         },
         write: {
           type: 'boolean',
@@ -131,10 +155,18 @@ const TOOL_DEFINITIONS = Object.freeze([
       openWorldHint: false,
       // Reads Solhint's own rule metadata. Touches nothing in the project.
     },
-    description: 'Explain a known Solhint rule and suggest a correction.',
+    description:
+      'Explain one Solhint rule and suggest a correction. Use for a rule id in a lint result ' +
+      'you do not recognise, or when asked what a warning means.',
     inputSchema: {
       type: 'object',
-      properties: { ruleId: { type: 'string', minLength: 1, description: 'Solhint rule ID' } },
+      properties: {
+        ruleId: {
+          type: 'string',
+          minLength: 1,
+          description: "Rule id exactly as a lint result reports it, e.g. 'avoid-low-level-calls'.",
+        },
+      },
       required: ['ruleId'],
       additionalProperties: false,
     },
@@ -150,7 +182,9 @@ const TOOL_DEFINITIONS = Object.freeze([
       // Reads the project's config. The throwaway lint it runs to surface
       // diagnostics writes nothing.
     },
-    description: 'Read the Solhint config for this server instance project.',
+    description:
+      "Show the project's effective Solhint config — which rules are on, and at what severity. " +
+      'Use to explain why a rule did or did not fire, or before changing .solhint.json.',
     inputSchema: {
       type: 'object',
       properties: {},
