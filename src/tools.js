@@ -50,7 +50,8 @@ const TOOL_DEFINITIONS = Object.freeze([
         filePath: {
           type: 'string',
           minLength: 1,
-          description: "Path to a .sol file, relative to the project root, e.g. 'contracts/Vault.sol'.",
+          description:
+            "Path to a .sol file, relative to the project root, e.g. 'contracts/Vault.sol'.",
         },
       },
       required: ['filePath'],
@@ -134,7 +135,8 @@ const TOOL_DEFINITIONS = Object.freeze([
         filePath: {
           type: 'string',
           minLength: 1,
-          description: "Path to a .sol file, relative to the project root, e.g. 'contracts/Vault.sol'.",
+          description:
+            "Path to a .sol file, relative to the project root, e.g. 'contracts/Vault.sol'.",
         },
         write: {
           type: 'boolean',
