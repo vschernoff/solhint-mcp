@@ -1,5 +1,7 @@
 # solhint-mcp
 
+[![vschernoff/solhint-mcp MCP server](https://glama.ai/mcp/servers/vschernoff/solhint-mcp/badges/score.svg)](https://glama.ai/mcp/servers/vschernoff/solhint-mcp)
+
 Lint and autofix Solidity smart contracts with [Solhint](https://github.com/protofire/solhint),
 from any MCP client — Claude Code, OpenAI Codex, Cursor, Windsurf, Claude Desktop, and
 anything else that speaks the protocol. Nothing in it is specific to one vendor.
