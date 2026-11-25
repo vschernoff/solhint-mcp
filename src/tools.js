@@ -69,9 +69,10 @@ const TOOL_DEFINITIONS = Object.freeze([
       // Reads matching files in the project. Writes nothing.
     },
     description:
-      'Lint many Solidity files at once. Use before treating Solidity work as finished, or when ' +
-      'you do not know which files changed. Without a pattern it tries contracts/** then src/**. ' +
-      'For one known file prefer lint_file; for source not saved yet use lint_solidity.',
+      'Lint many Solidity files at once. Use before treating Solidity work as finished, or ' +
+      'when you do not know which files changed. Without a pattern it tries contracts/**/*.sol, ' +
+      'then src/**/*.sol, then **/*.sol. For one known file prefer lint_file; for source not ' +
+      'saved yet use lint_solidity.',
     inputSchema: {
       type: 'object',
       properties: {
