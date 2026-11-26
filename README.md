@@ -13,6 +13,37 @@ Your agent gets seven tools: `lint_solidity`, `lint_file`, `lint_project`,
 > [protofire/solhint#801](https://github.com/protofire/solhint/pull/801), shipped in
 > Solhint 6.2.5.
 
+## If you are evaluating this for a project
+
+**When the CLI is enough.** For one small contract, `npx solhint` does about as well. This
+exists for the case where an agent is doing the work.
+
+**What it adds, as function rather than as a claimed improvement.** Findings come back as
+structured data instead of text to re-parse. `fix_file` applies Solhint's own autofixes and
+reports what is still left in the same call. `explain_rule` answers "what is this rule"
+from Solhint's own metadata, for the version your project runs. And when a run is degraded
+— a plugin that would not load, a rule Solhint did not recognise — the result says so;
+the CLI puts that on stderr, where an agent usually drops it.
+
+**Reproducing a result by hand.** It reads your project's own `.solhint.json`. It prefers a
+Solhint `>=6.1.0 <7.0.0` installed in the project and otherwise uses its bundled 6.2.5, so
+to match it exactly run `npx solhint@6.2.5 'contracts/**/*.sol'`. The findings are the
+same — same rules, same line and column; only the formatting differs.
+
+**Requirements.** Node 20 or newer. Nothing else; no network calls, no account.
+
+**Evidence you can check.** CI on Linux, macOS and Windows against Node 20 and 22 and
+against Solhint 6.1.0, 6.2.4 and latest. Listed in the
+[MCP Registry](https://registry.modelcontextprotocol.io). Listed in Solhint's own README
+under IDE Integrations ([protofire/solhint#813](https://github.com/protofire/solhint/pull/813)).
+21/21 lint-stage cases in [solidity-ai-kit](https://github.com/vschernoff/solidity-ai-kit)'s
+scorecard (§2.4d).
+
+**What it does not do.** Solhint is a linter, not a security analyser: it catches style,
+gas and some security classes, and misses whole categories including some reentrancy
+patterns. It also runs your project's own Solhint config and plugins, which are JavaScript
+— so do not point it at a repository you would not run `npm install` in.
+
 ## Installation
 
 Add this to your MCP client's configuration, with the Solidity project as the working
