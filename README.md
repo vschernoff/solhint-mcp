@@ -15,6 +15,9 @@ Your agent gets seven tools: `lint_solidity`, `lint_file`, `lint_project`,
 
 ## If you are evaluating this for a project
 
+**What this is.** An independent, MIT-licensed package. It depends on Solhint and is not
+part of it, and it is not a Protofire product.
+
 **When the CLI is enough.** For one small contract, `npx solhint` does about as well. This
 exists for the case where an agent is doing the work.
 
